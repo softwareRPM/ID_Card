@@ -1,0 +1,8 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Your Name
+ORG:HDFC Bank
+TITLE:Software Engineer
+TEL;TYPE=CELL:+919876543210
+EMAIL:your.email@example.com
+END:VCARD
