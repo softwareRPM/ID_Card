@@ -1,89 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Name</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f7fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-
-        .card {
-            background: white;
-            width: 350px;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-
-        img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 15px;
-        }
-
-        h1 {
-            margin: 10px 0;
-        }
-
-        p {
-            color: #666;
-        }
-
-        .btn {
-            display: block;
-            margin: 12px 0;
-            padding: 14px;
-            text-decoration: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-        }
-
-        .call { background: #28a745; }
-        .email { background: #007bff; }
-        .linkedin { background: #0A66C2; }
-        .save { background: #ff6b35; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1d2925">
+  <title>Your Name | Contact</title>
+  <style>
+    :root{--ink:#1d2925;--forest:#29483e;--cream:#f7f4ed;--sand:#e8dfcf;--gold:#bf9553;--muted:#68716c;--white:#fffdf9;--line:rgba(29,41,37,.13)}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{background:var(--cream);color:var(--ink);font-family:Arial,Helvetica,sans-serif;margin:0} a{color:inherit}.wrap{margin:0 auto;max-width:1120px;padding:0 24px}.eyebrow{color:var(--gold);font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+    header{background:var(--ink);color:var(--white)}.nav{align-items:center;display:flex;justify-content:space-between;min-height:76px}.brand{font-family:Georgia,serif;font-size:1.15rem;font-weight:700;letter-spacing:.02em;text-decoration:none}.nav-link{border:1px solid rgba(255,255,255,.45);font-size:.78rem;letter-spacing:.08em;padding:10px 14px;text-decoration:none;text-transform:uppercase}
+    .hero{background:linear-gradient(120deg,rgba(29,41,37,.98),rgba(41,72,62,.92));color:var(--white);overflow:hidden;padding:76px 0 84px;position:relative}.hero:after{border:1px solid rgba(191,149,83,.35);border-radius:50%;content:"";height:430px;position:absolute;right:-125px;top:-185px;width:430px}.hero-grid{align-items:end;display:grid;gap:34px;grid-template-columns:1.3fr .7fr;position:relative;z-index:1}h1,h2,h3{font-family:Georgia,'Times New Roman',serif}h1{font-size:clamp(2.65rem,7vw,5.6rem);font-weight:400;letter-spacing:-.045em;line-height:.94;margin:14px 0 22px;max-width:700px}.intro{color:rgba(255,255,255,.77);font-size:1.05rem;line-height:1.7;margin:0;max-width:515px}.monogram{align-items:center;border:1px solid rgba(191,149,83,.68);border-radius:50%;color:var(--gold);display:flex;font-family:Georgia,serif;font-size:3.2rem;height:155px;justify-content:center;justify-self:end;width:155px}
+    main{padding:70px 0}.section-heading{display:flex;gap:20px;justify-content:space-between;margin-bottom:25px}h2{font-size:clamp(2rem,4vw,3rem);font-weight:400;letter-spacing:-.035em;margin:6px 0 0}.small-copy{color:var(--muted);font-size:.96rem;line-height:1.6;max-width:360px}.contact-grid{display:grid;gap:14px;grid-template-columns:repeat(3,1fr)}.contact-card{background:var(--white);border:1px solid var(--line);min-height:196px;padding:25px;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease}.contact-card:hover{box-shadow:0 15px 35px rgba(29,41,37,.1);transform:translateY(-4px)}.card-number{color:var(--gold);font-size:.75rem;font-weight:700;letter-spacing:.12em}h3{font-size:1.55rem;font-weight:400;margin:34px 0 10px}.contact-card span:last-child{color:var(--muted);font-size:.9rem;line-height:1.5}
+    .profile{border-bottom:1px solid var(--line);border-top:1px solid var(--line);display:grid;gap:45px;grid-template-columns:1fr 1fr;margin:82px 0 70px;padding:55px 0}.profile p{color:var(--muted);line-height:1.7;margin:17px 0 0;max-width:500px}.details{display:grid;gap:0;margin:0}.details div{border-bottom:1px solid var(--line);display:grid;gap:12px;grid-template-columns:110px 1fr;padding:17px 0}dt{color:var(--muted);font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}dd{margin:0}.document{background:var(--sand);display:grid;gap:30px;grid-template-columns:1fr auto;padding:36px}.document h2{margin:7px 0 12px}.document p{color:#515a55;line-height:1.6;margin:0;max-width:560px}.button{align-self:center;background:var(--ink);color:var(--white);display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.1em;padding:16px 19px;text-decoration:none;text-transform:uppercase;white-space:nowrap}footer{background:var(--ink);color:rgba(255,255,255,.72);font-size:.8rem;margin-top:70px;padding:25px 0}.footer-row{align-items:center;display:flex;justify-content:space-between}
+    @media(max-width:720px){.hero{padding:58px 0 62px}.hero-grid,.profile,.document{grid-template-columns:1fr}.monogram{height:94px;justify-self:start;width:94px}.contact-grid{grid-template-columns:1fr}main{padding:52px 0}.profile{gap:30px;margin:58px 0 52px;padding:42px 0}.section-heading{display:block}.footer-row{align-items:flex-start;flex-direction:column;gap:10px}}
+  </style>
 </head>
 <body>
-
-<div class="card">
-
-    <img src="profile.jpg" alt="Profile">
-
-    <h1>Your Name</h1>
-
-    <p>Software Engineer | HDFC Bank</p>
-
-    <a class="btn call" href="tel:+919876543210">
-        📞 Call Me
-    </a>
-
-    <a class="btn email" href="mailto:your.email@example.com">
-        ✉️ Send Email
-    </a>
-
-    <a class="btn linkedin" href="https://linkedin.com/in/yourprofile">
-        🔗 LinkedIn
-    </a>
-
-    <a class="btn save" href="contact.vcf">
-        💾 Save Contact
-    </a>
-
-</div>
-
+  <header><div class="wrap nav"><a class="brand" href="#top">Your Name</a><a class="nav-link" href="#contact">Get in touch</a></div></header>
+  <section class="hero" id="top"><div class="wrap hero-grid"><div><div class="eyebrow">Digital Contact Card</div><h1>Let’s build a meaningful connection.</h1><p class="intro">A direct way to reach me, save my details, and view the latest information—all in one place.</p></div><div class="monogram" aria-label="Your initials">YN</div></div></section>
+  <main class="wrap" id="contact">
+    <div class="section-heading"><div><div class="eyebrow">Contact</div><h2>How can I help?</h2></div><p class="small-copy">Choose the most convenient way to connect. I’ll be glad to hear from you.</p></div>
+    <section class="contact-grid" aria-label="Contact methods">
+      <a class="contact-card" href="tel:+91XXXXXXXXXX"><span class="card-number">01 / PHONE</span><h3>📞 Call Me</h3><span>Opens the phone dialer</span></a>
+      <a class="contact-card" href="mailto:your@email.com"><span class="card-number">02 / EMAIL</span><h3>✉️ Email Me</h3><span>Opens your default email app</span></a>
+      <a class="contact-card" href="contact.vcf" download><span class="card-number">03 / CONTACT</span><h3>💾 Save Contact</h3><span>Download or open my contact card</span></a>
+    </section>
+    <section class="profile" aria-label="Profile"><div><div class="eyebrow">Profile</div><h2>Your Name</h2><p>Software Engineer at HDFC Bank. I care about thoughtful work, strong relationships, and simple solutions that make a real difference.</p></div><dl class="details"><div><dt>Role</dt><dd>Software Engineer</dd></div><div><dt>Organisation</dt><dd>HDFC Bank</dd></div><div><dt>Location</dt><dd>Your City, India</dd></div><div><dt>Availability</dt><dd>By appointment</dd></div></dl></section>
+    <section class="document" aria-label="Latest document"><div><div class="eyebrow">Always up to date</div><h2>View the latest PDF</h2><p>This link is permanent. The document can be updated whenever needed without changing the printed QR code.</p></div><a class="button" href="pdf/">Open PDF</a></section>
+  </main>
+  <footer><div class="wrap footer-row"><span>© 2026 Your Name</span><a href="contact.vcf" download>Save my contact</a></div></footer>
 </body>
 </html>
