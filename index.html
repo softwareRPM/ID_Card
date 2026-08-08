@@ -2,20 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV&download=1">
-  <title>Opening PDF...</title>
-  <link rel="canonical" href="https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV&download=1">
+  <title>Opening PDF via Graph...</title>
   <script>
     (function(){
-      var url = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV&download=1';
+      var share = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
+      var proxy = '/api/getDownloadUrl?url=' + encodeURIComponent(share);
+      // Set fallback link href
+      window.addEventListener('DOMContentLoaded', function(){
+        var a = document.getElementById('pdfLink');
+        if (a) a.href = proxy;
+      });
       // Try to open in a new tab; if blocked, navigate the current window
       var opened = false;
-      try { opened = window.open(url, '_blank', 'noopener'); } catch(e) { opened = false; }
-      if (!opened) { window.location.href = url; }
+      try { opened = window.open(proxy, '_blank', 'noopener'); } catch(e) { opened = false; }
+      if (!opened) { window.location.href = proxy; }
     })();
   </script>
 </head>
 <body>
-  <p>If you are not redirected automatically, <a id="pdfLink" href="https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV&download=1" target="_blank" rel="noopener">click here to open/download the PDF</a>.</p>
+  <p>If you are not redirected automatically, <a id="pdfLink" target="_blank" rel="noopener">click here to open the PDF via Graph</a>.</p>
 </body>
 </html>
