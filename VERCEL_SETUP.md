@@ -46,11 +46,15 @@ On the app registration page:
 1. After deployment, go to your project
 2. Click **Settings** → **Domains**
 3. Click **Add** and enter: `info.ramendu.com`
-4. Vercel will show you DNS records to add
-5. Go to your domain registrar (where you bought info.ramendu.com)
-6. Add the DNS records in your registrar's settings
-7. Wait 5-30 minutes for DNS to propagate
-8. Your site will now be at **https://info.ramendu.com** ✅
+4. Vercel will show you a **CNAME record** to add
+5. Go to **GoDaddy.com** and login
+6. Find your domain and go to **DNS Settings**
+7. Add the CNAME record that Vercel shows:
+   - **Host:** `info` (or `www.info`)
+   - **Points to:** `cname.vercel-dns.com` (Vercel will show you the exact value)
+8. **Important:** Do NOT change your nameservers - just add the DNS record
+9. Wait 5-30 minutes for DNS to propagate
+10. Your site will now be at **https://info.ramendu.com** ✅
 
 ## Step 6: Add Environment Variables in Vercel
 
