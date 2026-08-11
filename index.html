@@ -247,8 +247,8 @@
   </div>
 
   <script>
-    const sharePointUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
-    const proxyUrl = '/api/getDownloadUrl?url=' + encodeURIComponent(sharePointUrl);
+    // Direct SharePoint PDF download URL (add ?download=1 to force download mode)
+    const pdfUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?download=1';
     
     let pdfDoc = null;
     let currentPage = 1;
@@ -344,7 +344,7 @@
       renderPage(currentPage);
     });
 
-    loadPDF(proxyUrl);
+    loadPDF(pdfUrl);
   </script>
 </body>
 </html>
