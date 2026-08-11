@@ -34,20 +34,25 @@ On the app registration page:
 
 ## Step 4: Deploy to Vercel
 
-1. Push code to GitHub:
-```bash
-git add .
-git commit -m "Add Vercel backend proxy for SharePoint PDF"
-git push origin master
-```
+1. Go to [Vercel.com](https://vercel.com)
+2. Sign in with GitHub
+3. Click **Add New** → **Project**
+4. Import your `ID_Card` repository
+5. Click **Deploy**
+6. Wait for deployment to complete (usually 1-2 minutes)
 
-2. Go to [Vercel.com](https://vercel.com)
-3. Sign in with GitHub
-4. Click **Add New** → **Project**
-5. Import your `ID_Card` repository
-6. Click **Deploy**
+## Step 5: Add Custom Domain
 
-## Step 5: Add Environment Variables in Vercel
+1. After deployment, go to your project
+2. Click **Settings** → **Domains**
+3. Click **Add** and enter: `info.ramendu.com`
+4. Vercel will show you DNS records to add
+5. Go to your domain registrar (where you bought info.ramendu.com)
+6. Add the DNS records in your registrar's settings
+7. Wait 5-30 minutes for DNS to propagate
+8. Your site will now be at **https://info.ramendu.com** ✅
+
+## Step 6: Add Environment Variables in Vercel
 
 1. After deployment, go to **Project Settings** → **Environment Variables**
 2. Add three variables:
@@ -56,9 +61,9 @@ git push origin master
    - Name: `CLIENT_SECRET` → Value: (your secret from Step 2)
 3. Click **Save**
 
-## Step 6: Test It
+## Step 7: Test It
 
-1. Your site should now be deployed at `https://id-card-<your-account>.vercel.app`
+1. Your site will now be deployed at **https://info.ramendu.com** ✅
 2. The PDF viewer should load and display your SharePoint PDF
 3. Whenever you update the PDF on SharePoint, it will auto-load the new version!
 
