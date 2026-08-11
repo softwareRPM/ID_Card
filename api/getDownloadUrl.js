@@ -1,9 +1,17 @@
-﻿export default async function handler(req, res) {
+export default async function handler(req, res) {
+  // Add CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   try {
     const url = (req.query && (req.query.url || req.query.u)) || (req.url && new URL(req.url, `http://${req.headers.host}`).searchParams.get('url'));
     if (!url) return res.status(400).send('Missing url query parameter (url=shareLink)');
 
-    // Decode in case the caller encoded it
     const shareLink = decodeURIComponent(url);
 
     // Build shareId: base64 of the original share URL, URL-safe, no padding, prefix u!
@@ -15,7 +23,9 @@
     const clientId = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
 
-    if (!tenant || !clientId || !clientSecret) return res.status(500).send('Server not configured. Set TENANT_ID, CLIENT_ID, and CLIENT_SECRET environment variables.');
+    if (!tenant || !clientId || !clientSecret) {
+      return res.status(500).send('Server not configured. Set TENANT_ID, CLIENT_ID, and CLIENT_SECRET environment variables.');
+    }
 
     // Acquire token (client credentials)
     const params = new URLSearchParams();
@@ -31,7 +41,9 @@
     });
 
     const tokenJson = await tokenRes.json();
-    if (!tokenJson.access_token) return res.status(500).json({ error: 'Failed to obtain access token', details: tokenJson });
+    if (!tokenJson.access_token) {
+      return res.status(500).json({ error: 'Failed to obtain access token', details: tokenJson });
+    }
     const accessToken = tokenJson.access_token;
 
     // Call Graph to get the driveItem from the share link
@@ -46,11 +58,19 @@
 
     const driveJson = await driveRes.json();
     const downloadUrl = driveJson['@microsoft.graph.downloadUrl'];
-    if (!downloadUrl) return res.status(500).json({ error: 'No downloadUrl returned', details: driveJson });
+    if (!downloadUrl) {
+      return res.status(500).json({ error: 'No downloadUrl returned', details: driveJson });
+    }
 
-    // Redirect the client to the ephemeral download URL
-    res.writeHead(302, { Location: downloadUrl });
-    res.end();
+    // Proxy the PDF with CORS headers
+    const pdfRes = await fetch(downloadUrl);
+    if (!pdfRes.ok) {
+      return res.status(pdfRes.status).send('Failed to fetch PDF');
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.send(await pdfRes.buffer());
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error', message: err.message });

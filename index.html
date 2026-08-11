@@ -247,8 +247,9 @@
   </div>
 
   <script>
-    // Direct SharePoint PDF download URL (add ?download=1 to force download mode)
-    const pdfUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?download=1';
+    // Use the Vercel API proxy to fetch the PDF with CORS headers
+    const sharePointUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
+    const pdfUrl = '/api/getDownloadUrl?url=' + encodeURIComponent(sharePointUrl);
     
     let pdfDoc = null;
     let currentPage = 1;
