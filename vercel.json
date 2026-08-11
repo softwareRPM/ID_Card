@@ -1,8 +1,3 @@
 {
-  "buildCommand": "npm run build",
-  "env": {
-    "TENANT_ID": "@tenant_id",
-    "CLIENT_ID": "@client_id",
-    "CLIENT_SECRET": "@client_secret"
-  }
+  "buildCommand": "npm run build"
 }

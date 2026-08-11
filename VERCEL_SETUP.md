@@ -59,11 +59,13 @@ On the app registration page:
 ## Step 6: Add Environment Variables in Vercel
 
 1. After deployment, go to **Project Settings** → **Environment Variables**
-2. Add three variables:
+2. Add three variables directly (do not use secret references unless you have created Vercel Secrets):
    - Name: `TENANT_ID` → Value: (your tenant ID from Step 2)
    - Name: `CLIENT_ID` → Value: (your client ID from Step 2)
    - Name: `CLIENT_SECRET` → Value: (your secret from Step 2)
 3. Click **Save**
+
+> If you want to use Vercel Secrets instead, first create the secrets in the Vercel dashboard, then reference them as `@tenant_id`, `@client_id`, and `@client_secret`.
 
 ## Step 7: Test It
 
