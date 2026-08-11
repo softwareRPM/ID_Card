@@ -1,10 +1,12 @@
 # Setup Instructions for Vercel Deployment
 
-## Step 1: Create a Microsoft Azure App for SharePoint Access
+## Step 1: Create a Microsoft Entra ID App for SharePoint Access
 
-1. Go to [Azure Portal](https://portal.azure.com)
+1. Go to [Entra ID Admin Center](https://entra.microsoft.com) (or [Azure Portal](https://portal.azure.com))
+   - *Note: Entra ID and Azure AD are the same - Microsoft renamed it to Entra ID*
 2. Sign in with your Microsoft account
-3. Go to **Azure Active Directory** → **App registrations** → **New registration**
+3. Go to **Applications** → **App registrations** → **New registration**
+   - (Or in Azure Portal: **Azure Active Directory** → **App registrations** → **New registration**)
 4. Fill in:
    - Name: `ID Card PDF Proxy`
    - Account types: `Accounts in this organizational directory only`
