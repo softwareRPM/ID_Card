@@ -98,12 +98,12 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Content-Type', 'application/pdf');
-    // Prevent browser caching so new uploads show immediately
-    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate, max-age=0');
-    res.setHeader('CDN-Cache-Control', 'no-store');
-    res.setHeader('Surrogate-Control', 'no-store');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    // Cache the PDF at the browser and edge for five minutes. This removes the
+    // SharePoint/Graph round trip for repeat visitors while still picking up a
+    // replaced SharePoint PDF shortly after it is uploaded.
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=60');
+    res.setHeader('CDN-Cache-Control', 'max-age=300, stale-while-revalidate=60');
+    res.setHeader('Vercel-CDN-Cache-Control', 'max-age=300, stale-while-revalidate=60');
     res.setHeader('Access-Control-Allow-Origin', '*');
 
     return res.status(200).send(buffer);

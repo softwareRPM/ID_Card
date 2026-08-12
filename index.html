@@ -55,7 +55,9 @@
   </div>
   <script>
     const sharePointUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
-    const pdfUrl = `/api/getDownloadUrl?url=${encodeURIComponent(sharePointUrl)}&v=${Date.now()}`;
+    // Keep this URL stable so the browser and Vercel can reuse a recent PDF response.
+    // The API cache refreshes automatically every five minutes.
+    const pdfUrl = `/api/getDownloadUrl?url=${encodeURIComponent(sharePointUrl)}`;
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const container = document.getElementById('viewer-container'); const viewer = document.getElementById('viewer');
     const previous = document.getElementById('previous'); const next = document.getElementById('next'); const indicator = document.getElementById('page-indicator');
