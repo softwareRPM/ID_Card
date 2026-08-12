@@ -1,12 +1,10 @@
 export default async function handler(req, res) {
-  // Add CORS headers
+  // Add CORS headers for every response
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
     const url = (req.query && (req.query.url || req.query.u)) || (req.url && new URL(req.url, `http://${req.headers.host}`).searchParams.get('url'));
@@ -14,7 +12,7 @@ export default async function handler(req, res) {
 
     const shareLink = decodeURIComponent(url);
 
-    // Build shareId: base64 of the original share URL, URL-safe, no padding, prefix u!
+    // Build shareId required by Microsoft Graph for shared links
     const rawB64 = Buffer.from(shareLink, 'utf8').toString('base64');
     const safeB64 = rawB64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     const shareId = 'u!' + safeB64;
@@ -58,21 +56,25 @@ export default async function handler(req, res) {
 
     const driveJson = await driveRes.json();
     const downloadUrl = driveJson['@microsoft.graph.downloadUrl'];
-    if (!downloadUrl) {
-      return res.status(500).json({ error: 'No downloadUrl returned', details: driveJson });
-    }
+    if (!downloadUrl) return res.status(500).json({ error: 'No downloadUrl returned', details: driveJson });
 
-    // Proxy the PDF with CORS headers
+    // Fetch the PDF and stream it back with CORS headers
     const pdfRes = await fetch(downloadUrl);
-    if (!pdfRes.ok) {
-      return res.status(pdfRes.status).send('Failed to fetch PDF');
-    }
+    if (!pdfRes.ok) return res.status(pdfRes.status).send('Failed to fetch PDF');
+
+    const arrayBuf = await pdfRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuf);
 
     res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.send(await pdfRes.buffer());
+
+    return res.status(200).send(buffer);
   } catch (err) {
     console.error(err);
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(500).json({ error: 'Server error', message: err.message });
   }
 }
