@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booklet PDF Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #323639; 
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background-color: #202124;
+            color: #ffffff;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .toolbar-title {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #3c4043;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .page-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #3c4043;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #505356;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #6a6d71;
+        }
+
+        button:disabled {
+            background: #3c4043;
+            color: #6a6d71;
+            cursor: not-allowed;
+        }
+
+        #page-indicator, #zoom-percentage {
+            font-size: 14px;
+            text-align: center;
+            user-select: none;
+            min-width: 120px;
+        }
+
+        #zoom-percentage { min-width: 45px; }
+
+        /* Booklet Canvas Area */
+        .viewer-container {
+            flex: 1;
+            overflow: auto;
+            padding: 40px;
+            display: flex;
+            align-items: flex-start; /* Prevents top clipping on zoom */
+        }
+
+        .book-spread {
+            margin: auto; /* Centers the book in the flex container */
+            display: flex;
+            flex-direction: row;
+            position: relative;
+        }
+
+        .page-wrapper {
+            background-color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid #ddd;
+        }
+
+        .page-wrapper.empty {
+            background-color: transparent;
+            box-shadow: none;
+            border: none;
+        }
+
+        /* Simulated book crease down the middle */
+        .crease {
+            position: absolute;
+            top: 0; bottom: 0; left: 50%;
+            width: 40px;
+            transform: translateX(-50%);
+            background: linear-gradient(to right, 
+                rgba(255,255,255,0) 0%, 
+                rgba(0,0,0,0.05) 40%, 
+                rgba(0,0,0,0.2) 50%, 
+                rgba(0,0,0,0.05) 60%, 
+                rgba(255,255,255,0) 100%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .status-message {
+            color: white;
+            font-size: 16px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <div class="toolbar-title">📖 RPM Luxury Townhomes</div>
+        
+        <div class="page-controls">
+            <button id="prev-spread" disabled>← Prev</button>
+            <span id="page-indicator">Loading...</span>
+            <button id="next-spread" disabled>Next →</button>
+        </div>
+
+        <div class="controls">
+            <button id="zoom-out" title="Zoom Out">−</button>
+            <span id="zoom-percentage">100%</span>
+            <button id="zoom-in" title="Zoom In">+</button>
+        </div>
+    </div>
+
+    <div class="viewer-container" id="viewer-container">
+        <div id="viewer">
+            <div class="status-message" id="status">Loading PDF...</div>
+        </div>
+    </div>
+
+    <script>
+        const sharePointUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
+        const pdfUrl = '/api/getDownloadUrl?url=' + encodeURIComponent(sharePointUrl);
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let currentZoom = 1.0;
+        let currentSpread = 0;
+        let maxSpreadIndex = 0;
+        
+        const viewer = document.getElementById('viewer');
+        const statusEl = document.getElementById('status');
+
+        async function initPDF() {
+            try {
+                pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
+                
+                // Calculate total spreads: Cover is spread 0, remainder is divided by 2
+                maxSpreadIndex = pdfDoc.numPages === 1 ? 0 : Math.ceil((pdfDoc.numPages - 1) / 2);
+                
+                renderSpread(currentSpread);
+            } catch (error) {
+                viewer.innerHTML = `<div class="status-message" style="color: #ff6b6b">Error loading PDF: ${error.message}</div>`;
+            }
+        }
+
+        async function createPageElement(pageNum) {
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: currentZoom });
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'page-wrapper';
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const outputScale = window.devicePixelRatio || 1;
+            canvas.width = Math.floor(viewport.width * outputScale);
+            canvas.height = Math.floor(viewport.height * outputScale);
+            
+            const exactWidth = Math.floor(viewport.width) + "px";
+            const exactHeight = Math.floor(viewport.height) + "px";
+            canvas.style.width = exactWidth;
+            canvas.style.height = exactHeight;
+            
+            wrapper.style.width = exactWidth;
+            wrapper.style.height = exactHeight;
+
+            const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+
+            wrapper.appendChild(canvas);
+            
+            await page.render({
+                canvasContext: ctx,
+                transform: transform,
+                viewport: viewport
+            }).promise;
+
+            return { wrapper, width: exactWidth, height: exactHeight };
+        }
+
+        async function renderSpread(spreadIndex) {
+            viewer.innerHTML = '<div class="status-message">Rendering...</div>';
+            
+            const spreadContainer = document.createElement('div');
+            spreadContainer.className = 'book-spread';
+            
+            // Logic for booklet pagination
+            let leftPageNum = spreadIndex === 0 ? null : (spreadIndex * 2);
+            let rightPageNum = spreadIndex === 0 ? 1 : (spreadIndex * 2 + 1);
+            if (rightPageNum > pdfDoc.numPages) rightPageNum = null;
+
+            let leftEl = null, rightEl = null;
+            let referenceWidth = '400px', referenceHeight = '600px'; 
+            
+            // Render actual pages
+            if (leftPageNum) {
+                const leftData = await createPageElement(leftPageNum);
+                leftEl = leftData.wrapper;
+                referenceWidth = leftData.width;
+                referenceHeight = leftData.height;
+            }
+            if (rightPageNum) {
+                const rightData = await createPageElement(rightPageNum);
+                rightEl = rightData.wrapper;
+                referenceWidth = rightData.width;
+                referenceHeight = rightData.height;
+            }
+
+            // Create empty placeholders to keep the book centered
+            if (!leftEl) {
+                leftEl = document.createElement('div');
+                leftEl.className = 'page-wrapper empty';
+                leftEl.style.width = referenceWidth;
+                leftEl.style.height = referenceHeight;
+            }
+            if (!rightEl) {
+                rightEl = document.createElement('div');
+                rightEl.className = 'page-wrapper empty';
+                rightEl.style.width = referenceWidth;
+                rightEl.style.height = referenceHeight;
+            }
+
+            spreadContainer.appendChild(leftEl);
+            spreadContainer.appendChild(rightEl);
+
+            // Add the binding crease only if we are viewing two open pages
+            if (leftPageNum && rightPageNum) {
+                const crease = document.createElement('div');
+                crease.className = 'crease';
+                spreadContainer.appendChild(crease);
+            }
+
+            viewer.innerHTML = '';
+            viewer.appendChild(spreadContainer);
+            
+            updatePaginationUI(leftPageNum, rightPageNum);
+        }
+
+        function updatePaginationUI(leftNum, rightNum) {
+            const textEl = document.getElementById('page-indicator');
+            if (!leftNum) {
+                textEl.textContent = `Page ${rightNum} of ${pdfDoc.numPages}`;
+            } else if (!rightNum) {
+                textEl.textContent = `Page ${leftNum} of ${pdfDoc.numPages}`;
+            } else {
+                textEl.textContent = `Pages ${leftNum}-${rightNum} of ${pdfDoc.numPages}`;
+            }
+            
+            document.getElementById('prev-spread').disabled = (currentSpread === 0);
+            document.getElementById('next-spread').disabled = (currentSpread >= maxSpreadIndex);
+        }
+
+        // Event Listeners for Pagination
+        document.getElementById('prev-spread').addEventListener('click', () => {
+            if (currentSpread > 0) {
+                currentSpread--;
+                renderSpread(currentSpread);
+            }
+        });
+
+        document.getElementById('next-spread').addEventListener('click', () => {
+            if (currentSpread < maxSpreadIndex) {
+                currentSpread++;
+                renderSpread(currentSpread);
+            }
+        });
+
+        // Event Listeners for Zoom
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            if (currentZoom >= 3.0) return;
+            currentZoom += 0.25;
+            document.getElementById('zoom-percentage').textContent = `${Math.round(currentZoom * 100)}%`;
+            renderSpread(currentSpread);
+        });
+
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            if (currentZoom <= 0.5) return;
+            currentZoom -= 0.25;
+            document.getElementById('zoom-percentage').textContent = `${Math.round(currentZoom * 100)}%`;
+            renderSpread(currentSpread);
+        });
+
+        // Initialize
+        initPDF();
+    </script>
+</body>
+</html>
