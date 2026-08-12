@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // Add CORS headers for every response
+  // Always allow CORS for this API (trusted proxy)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     const clientSecret = process.env.CLIENT_SECRET;
 
     if (!tenant || !clientId || !clientSecret) {
-      return res.status(500).send('Server not configured. Set TENANT_ID, CLIENT_ID, and CLIENT_SECRET environment variables.');
+      return res.status(500).json({ error: 'Server not configured. Set TENANT_ID, CLIENT_ID, and CLIENT_SECRET environment variables.' });
     }
 
     // Acquire token (client credentials)
@@ -38,10 +38,17 @@ export default async function handler(req, res) {
       body: params.toString(),
     });
 
-    const tokenJson = await tokenRes.json();
-    if (!tokenJson.access_token) {
-      return res.status(500).json({ error: 'Failed to obtain access token', details: tokenJson });
+    let tokenJson;
+    try {
+      tokenJson = await tokenRes.json();
+    } catch (e) {
+      return res.status(500).json({ error: 'Failed to parse token response', status: tokenRes.status, bodyText: await tokenRes.text() });
     }
+
+    if (!tokenJson || !tokenJson.access_token) {
+      return res.status(500).json({ error: 'Failed to obtain access token', status: tokenRes.status, details: tokenJson });
+    }
+
     const accessToken = tokenJson.access_token;
 
     // Call Graph to get the driveItem from the share link
@@ -49,23 +56,40 @@ export default async function handler(req, res) {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if (!driveRes.ok) {
-      const txt = await driveRes.text();
-      return res.status(driveRes.status).send(txt);
+    let driveJson;
+    try {
+      // Graph normally returns JSON here
+      driveJson = await driveRes.json();
+    } catch (e) {
+      return res.status(500).json({ error: 'Failed to parse driveItem response', status: driveRes.status, bodyText: await driveRes.text() });
     }
 
-    const driveJson = await driveRes.json();
+    if (!driveRes.ok) {
+      return res.status(driveRes.status).json({ error: 'Graph /shares request failed', status: driveRes.status, body: driveJson });
+    }
+
     const downloadUrl = driveJson['@microsoft.graph.downloadUrl'];
     if (!downloadUrl) return res.status(500).json({ error: 'No downloadUrl returned', details: driveJson });
 
-    // Fetch the PDF and stream it back with CORS headers
+    // If debug is requested, return diagnostics (redact access_token)
+    if (req.query.debug === '1' || req.query.debug === 'true') {
+      const redactedToken = Object.assign({}, tokenJson);
+      if (redactedToken.access_token) redactedToken.access_token = 'REDACTED';
+      return res.status(200).json({ ok: true, shareId, token: redactedToken, driveItem: driveJson });
+    }
+
+    // Fetch the PDF from the ephemeral download URL and stream bytes back
     const pdfRes = await fetch(downloadUrl);
-    if (!pdfRes.ok) return res.status(pdfRes.status).send('Failed to fetch PDF');
+    if (!pdfRes.ok) {
+      const body = await pdfRes.text();
+      return res.status(pdfRes.status).json({ error: 'Failed to fetch PDF from downloadUrl', status: pdfRes.status, body });
+    }
 
     const arrayBuf = await pdfRes.arrayBuffer();
     const buffer = Buffer.from(arrayBuf);
 
     res.setHeader('Content-Type', 'application/pdf');
+    // Prevent browser caching so new uploads show immediately
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
@@ -73,8 +97,9 @@ export default async function handler(req, res) {
 
     return res.status(200).send(buffer);
   } catch (err) {
-    console.error(err);
+    console.error('API error', err);
+    // Ensure CORS header on error responses
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.status(500).json({ error: 'Server error', message: err.message });
+    return res.status(500).json({ error: 'Server error', message: err.message });
   }
 }
