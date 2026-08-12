@@ -3,33 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#202124">
+  <meta name="theme-color" content="#12354a">
   <title>RPM Luxury Townhomes Booklet</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
-    :root { color-scheme: dark; }
+    :root { color-scheme: light; --rpm-navy: #12354a; --rpm-navy-dark: #0b2636; --rpm-orange: #e87722; --rpm-orange-dark: #c85c0c; --rpm-cream: #f7f4ee; --rpm-slate: #425466; }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
-    body { min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: #323639; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    .toolbar { z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px clamp(12px, 3vw, 24px); background: #202124; box-shadow: 0 2px 5px #0005; }
+    body { min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: var(--rpm-cream); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .toolbar { z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px clamp(12px, 3vw, 24px); background: var(--rpm-navy); border-bottom: 4px solid var(--rpm-orange); box-shadow: 0 2px 8px #0b263640; }
     .toolbar-title { min-width: 0; overflow: hidden; color: #fff; font-size: 1rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-    .page-controls, .controls { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 8px; border-radius: 7px; background: #3c4043; }
+    .page-controls, .controls { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 8px; border-radius: 7px; background: #ffffff1c; }
     .controls { justify-self: end; }
-    button { min-height: 34px; border: 0; border-radius: 5px; padding: 6px 10px; background: #505356; color: #fff; cursor: pointer; font: inherit; font-size: .875rem; font-weight: 650; }
-    button:hover:not(:disabled), button:focus-visible { background: #6a6d71; outline: 2px solid #9fc5ff; outline-offset: 2px; }
-    button:disabled { color: #92969a; cursor: not-allowed; }
+    button { min-height: 34px; border: 0; border-radius: 5px; padding: 6px 10px; background: var(--rpm-orange); color: #fff; cursor: pointer; font: inherit; font-size: .875rem; font-weight: 700; }
+    button:hover:not(:disabled), button:focus-visible { background: var(--rpm-orange-dark); outline: 2px solid #fff; outline-offset: 2px; }
+    button:disabled { background: #ffffff1c; color: #ffffff80; cursor: not-allowed; }
     #page-indicator { min-width: 116px; color: #fff; font-size: .875rem; text-align: center; white-space: nowrap; }
     #zoom-percentage { width: 42px; color: #fff; font-size: .875rem; text-align: center; }
-    .viewer-container { flex: 1 1 auto; min-height: 0; overflow: auto; padding: clamp(12px, 4vw, 40px); }
+    .viewer-container { flex: 1 1 auto; min-height: 0; overflow: auto; padding: clamp(12px, 4vw, 40px); background: linear-gradient(135deg, #edf0ec, var(--rpm-cream)); }
     #viewer { display: flex; align-items: flex-start; justify-content: center; min-width: 100%; min-height: 100%; }
     .book-spread { position: relative; display: flex; gap: 24px; margin: auto; }
     .book-spread.single { gap: 0; }
-    .page-wrapper { flex: 0 0 auto; overflow: hidden; border: 1px solid #ddd; background: #fff; box-shadow: 0 4px 15px #0006; }
+    .page-wrapper { flex: 0 0 auto; overflow: hidden; border: 1px solid #d8d2c5; background: #fff; box-shadow: 0 4px 15px #0b263650; }
     .page-wrapper.empty { border: 0; background: transparent; box-shadow: none; }
     .page-wrapper canvas { display: block; }
     .crease { position: absolute; z-index: 2; top: 0; bottom: 0; left: 50%; width: 36px; transform: translateX(-50%); pointer-events: none; background: linear-gradient(90deg, transparent, #0002 50%, transparent); }
-    .status-message { align-self: center; margin: auto; max-width: 38rem; padding: 16px; color: #fff; text-align: center; line-height: 1.5; }
-    .status-message.error { color: #ffadad; }
+    .status-message { align-self: center; margin: auto; max-width: 38rem; padding: 16px; color: var(--rpm-slate); text-align: center; line-height: 1.5; }
+    .status-message.error { color: #b42318; }
     @media (max-width: 760px) {
       .toolbar { grid-template-columns: 1fr auto; gap: 8px; }
       .toolbar-title { grid-column: 1 / -1; text-align: center; }
@@ -63,7 +63,8 @@
   <main class="viewer-container" id="viewer-container"><div id="viewer"><p class="status-message">Loading PDF…</p></div></main>
   <script>
     const sharePointUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
-    const pdfUrl = `/api/getDownloadUrl?url=${encodeURIComponent(sharePointUrl)}`;
+    // A unique query value prevents mobile browsers, service workers, and CDNs from reusing an older PDF response.
+    const pdfUrl = `/api/getDownloadUrl?url=${encodeURIComponent(sharePointUrl)}&v=${Date.now()}`;
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const viewer = document.getElementById('viewer');
     const container = document.getElementById('viewer-container');

@@ -99,7 +99,9 @@ export default async function handler(req, res) {
 
     res.setHeader('Content-Type', 'application/pdf');
     // Prevent browser caching so new uploads show immediately
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate, max-age=0');
+    res.setHeader('CDN-Cache-Control', 'no-store');
+    res.setHeader('Surrogate-Control', 'no-store');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Access-Control-Allow-Origin', '*');

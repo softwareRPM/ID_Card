@@ -1,0 +1,351 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Viewer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f0f0;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .toolbar {
+      background: #2c3e50;
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .toolbar h1 {
+      font-size: 18px;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    button:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+
+    .page-info {
+      background: #34495e;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .zoom-controls {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .zoom-controls button {
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+
+    input[type="number"] {
+      width: 50px;
+      padding: 6px;
+      border: 1px solid #bdc3c7;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .viewer-container {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 16px;
+      background: #f0f0f0;
+    }
+
+    #pdf-container {
+      background: white;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 2px;
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 8px 0;
+    }
+
+    .loading {
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 16px;
+    }
+
+    .error {
+      background: #e74c3c;
+      color: white;
+      padding: 16px;
+      border-radius: 4px;
+      margin: 16px;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .toolbar {
+        padding: 10px 12px;
+      }
+
+      .toolbar h1 {
+        font-size: 16px;
+      }
+
+      .controls {
+        width: 100%;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      button {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .page-info {
+        font-size: 12px;
+        padding: 5px 8px;
+      }
+
+      input[type="number"] {
+        width: 45px;
+        padding: 5px;
+        font-size: 12px;
+      }
+
+      .viewer-container {
+        padding: 8px;
+      }
+
+      canvas {
+        margin: 4px 0;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .toolbar {
+        padding: 8px;
+        gap: 6px;
+      }
+
+      .toolbar h1 {
+        font-size: 14px;
+        width: 100%;
+      }
+
+      .controls {
+        width: 100%;
+        justify-content: space-around;
+      }
+
+      button {
+        padding: 6px 8px;
+        font-size: 11px;
+      }
+
+      .zoom-controls {
+        gap: 2px;
+      }
+
+      .zoom-controls button {
+        padding: 5px 6px;
+      }
+
+      input[type="number"] {
+        width: 40px;
+        padding: 4px;
+        font-size: 11px;
+      }
+
+      .page-info {
+        font-size: 11px;
+        padding: 4px 6px;
+      }
+
+      .viewer-container {
+        padding: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="toolbar">
+      <h1>📄 PDF Viewer</h1>
+      <div class="controls">
+        <button id="prevBtn" title="Previous page">← Prev</button>
+        <div class="page-info">
+          <span id="currentPage">1</span> / <span id="totalPages">0</span>
+        </div>
+        <input type="number" id="pageInput" value="1" min="1" title="Go to page">
+        <button id="nextBtn" title="Next page">Next →</button>
+        <div class="zoom-controls">
+          <button id="zoomOutBtn" title="Zoom out">−</button>
+          <input type="number" id="zoomLevel" value="100" min="50" max="300" step="10" title="Zoom level (%)">
+          <button id="zoomInBtn" title="Zoom in">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="viewer-container">
+      <div id="pdf-container"></div>
+    </div>
+  </div>
+
+  <script>
+    // Use the Vercel API proxy to fetch the PDF with CORS headers
+    const sharePointUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
+    const pdfUrl = '/api/getDownloadUrl?url=' + encodeURIComponent(sharePointUrl);
+    
+    let pdfDoc = null;
+    let currentPage = 1;
+    let zoom = 1;
+    const container = document.getElementById('pdf-container');
+    const currentPageSpan = document.getElementById('currentPage');
+    const totalPagesSpan = document.getElementById('totalPages');
+    const pageInput = document.getElementById('pageInput');
+    const zoomLevel = document.getElementById('zoomLevel');
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    function showError(message) {
+      container.innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    function showLoading() {
+      container.innerHTML = '<div class="loading">Loading PDF...</div>';
+    }
+
+    async function renderPage(pageNum) {
+      if (!pdfDoc) return;
+      if (pageNum < 1 || pageNum > pdfDoc.numPages) return;
+
+      currentPage = pageNum;
+      currentPageSpan.textContent = currentPage;
+      pageInput.value = currentPage;
+
+      try {
+        const page = await pdfDoc.getPage(pageNum);
+        const scale = zoom;
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        container.innerHTML = '';
+        container.appendChild(canvas);
+
+        await page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise;
+
+        document.getElementById('prevBtn').disabled = currentPage <= 1;
+        document.getElementById('nextBtn').disabled = currentPage >= pdfDoc.numPages;
+      } catch (error) {
+        showError('Error rendering page: ' + error.message);
+      }
+    }
+
+    async function loadPDF(url) {
+      showLoading();
+      try {
+        pdfDoc = await pdfjsLib.getDocument(url).promise;
+        totalPagesSpan.textContent = pdfDoc.numPages;
+        pageInput.max = pdfDoc.numPages;
+        renderPage(1);
+      } catch (error) {
+        showError('Error loading PDF: ' + error.message + '<br><br>Make sure CORS is enabled or the PDF is accessible.');
+      }
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      renderPage(currentPage - 1);
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      renderPage(currentPage + 1);
+    });
+
+    pageInput.addEventListener('change', (e) => {
+      const pageNum = parseInt(e.target.value) || currentPage;
+      renderPage(pageNum);
+    });
+
+    document.getElementById('zoomOutBtn').addEventListener('click', () => {
+      zoom = Math.max(0.5, zoom - 0.2);
+      zoomLevel.value = Math.round(zoom * 100);
+      renderPage(currentPage);
+    });
+
+    document.getElementById('zoomInBtn').addEventListener('click', () => {
+      zoom = Math.min(3, zoom + 0.2);
+      zoomLevel.value = Math.round(zoom * 100);
+      renderPage(currentPage);
+    });
+
+    zoomLevel.addEventListener('change', (e) => {
+      zoom = parseInt(e.target.value) / 100;
+      renderPage(currentPage);
+    });
+
+    loadPDF(pdfUrl);
+  </script>
+</body>
+</html>
