@@ -3,116 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#12354a">
+  <meta name="theme-color" content="#00a8e8">
   <title>RPM Luxury Townhomes</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
-    :root { --navy: #12354a; --navy-deep: #0b2636; --orange: #e87722; --orange-dark: #c95e0d; --canvas: #f5f2eb; --ink: #163547; --muted: #60717d; }
+    :root { --rpm-blue: #00a8e8; --rpm-blue-deep: #0784bd; --rpm-green: #a4cf2b; --rpm-ink: #404042; --rpm-surface: #f4f7f7; }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
-    body { min-height: 100dvh; overflow: hidden; background: var(--canvas); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body { min-height: 100dvh; overflow: hidden; background: var(--rpm-surface); color: var(--rpm-ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
     .app { height: 100%; display: flex; flex-direction: column; }
-    .topbar { z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 72px; padding: 12px clamp(16px, 4vw, 52px); background: var(--navy); border-bottom: 4px solid var(--orange); box-shadow: 0 2px 10px #0b263638; }
-    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; color: #fff; text-decoration: none; }
-    .brand-mark { display: grid; place-items: center; flex: 0 0 auto; width: 37px; height: 37px; border: 1px solid #ffffff85; border-radius: 50%; color: var(--orange); font-size: .8rem; font-weight: 800; letter-spacing: -.07em; }
-    .brand-copy { min-width: 0; }
-    .brand-copy strong, .brand-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .brand-copy strong { font-size: 1rem; letter-spacing: .04em; text-transform: uppercase; }
-    .brand-copy span { margin-top: 2px; color: #d6e1e6; font-size: .74rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-    .actions { display: flex; align-items: center; gap: 8px; }
-    .page-chip { padding: 7px 10px; border: 1px solid #ffffff38; border-radius: 99px; color: #e8f1f4; font-size: .78rem; font-weight: 650; white-space: nowrap; }
-    .icon-button, .download { display: inline-grid; place-items: center; width: 38px; height: 38px; border: 1px solid #ffffff45; border-radius: 50%; background: transparent; color: #fff; cursor: pointer; text-decoration: none; transition: transform .18s ease, background .18s ease, border-color .18s ease; }
-    .icon-button:hover, .download:hover, .icon-button:focus-visible, .download:focus-visible { border-color: var(--orange); background: var(--orange); outline: none; transform: translateY(-1px); }
-    .icon-button svg, .download svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
-    .viewer-container { position: relative; flex: 1; min-height: 0; overflow: auto; scroll-behavior: smooth; background: radial-gradient(circle at top, #fffdfa 0, var(--canvas) 52%); }
-    .reader { display: grid; justify-items: center; width: min(100% - 32px, 960px); min-height: 100%; margin: 0 auto; padding: clamp(18px, 4vw, 42px) 0 56px; gap: clamp(14px, 2.5vw, 28px); }
-    .page { overflow: hidden; width: max-content; max-width: 100%; border: 1px solid #ded9ce; background: #fff; box-shadow: 0 12px 30px #12354a20; animation: page-in .28s ease both; }
-    .page canvas { display: block; max-width: 100%; height: auto; }
-    .loading { display: grid; place-items: center; min-height: 42vh; color: var(--muted); font-weight: 600; text-align: center; }
-    .loading::before { width: 28px; height: 28px; margin: 0 auto 14px; border: 3px solid #d6d1c7; border-top-color: var(--orange); border-radius: 50%; content: ""; animation: spin .7s linear infinite; }
-    .loading.error { color: #ae271b; }
-    .loading.error::before { display: none; }
-    .zoom-panel { position: fixed; z-index: 1; right: clamp(12px, 3vw, 28px); bottom: max(18px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 4px; padding: 5px; border: 1px solid #d8d3c9; border-radius: 99px; background: #fffdfa; box-shadow: 0 8px 25px #12354a24; }
-    .zoom-panel button { width: 35px; height: 35px; border: 0; border-radius: 50%; background: transparent; color: var(--navy); cursor: pointer; font-size: 1.25rem; line-height: 1; transition: background .18s ease, color .18s ease; }
-    .zoom-panel button:hover, .zoom-panel button:focus-visible { background: var(--navy); color: #fff; outline: none; }
-    #zoom-value { min-width: 46px; color: var(--muted); font-size: .77rem; font-weight: 750; text-align: center; }
+    .topbar { z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 70px; padding: 8px clamp(12px, 3vw, 32px); background: #fff; border-bottom: 4px solid var(--rpm-green); box-shadow: 0 2px 10px #006c9824; }
+    .logo-link { display: flex; align-items: center; flex: 0 1 180px; min-width: 96px; }
+    .logo-link img { display: block; width: 100%; max-height: 54px; object-fit: contain; object-position: left center; }
+    .navigation { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }
+    .nav-button, .download { min-height: 36px; border: 1px solid #d4e7ee; border-radius: 7px; background: #fff; color: var(--rpm-blue-deep); cursor: pointer; font: inherit; font-size: .82rem; font-weight: 750; text-decoration: none; transition: background .18s ease, color .18s ease, transform .18s ease; }
+    .nav-button { padding: 7px 10px; }
+    .nav-button:hover:not(:disabled), .nav-button:focus-visible, .download:hover, .download:focus-visible { border-color: var(--rpm-blue); background: var(--rpm-blue); color: #fff; outline: none; transform: translateY(-1px); }
+    .nav-button:disabled { border-color: #eceff0; color: #a7b3b8; cursor: not-allowed; }
+    #page-indicator { min-width: 62px; color: var(--rpm-ink); font-size: .76rem; font-weight: 700; text-align: center; white-space: nowrap; }
+    .download { display: grid; place-items: center; width: 36px; padding: 0; }
+    .download svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+    .viewer-container { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; overflow: auto; overscroll-behavior: contain; background: linear-gradient(145deg, #e8f5f9, #f8fbf8 55%, #edf7df); }
+    #viewer { display: grid; place-items: center; min-width: 100%; min-height: 100%; }
+    .page { overflow: hidden; background: #fff; box-shadow: 0 10px 26px #006c9826; }
+    .page canvas { display: block; }
+    .status { color: var(--rpm-ink); font-weight: 650; text-align: center; }
+    .status::before { display: block; width: 25px; height: 25px; margin: 0 auto 12px; border: 3px solid #c9e6f0; border-top-color: var(--rpm-blue); border-radius: 50%; content: ""; animation: spin .7s linear infinite; }
+    .status.error { color: #a42318; }
+    .status.error::before { display: none; }
+    .zoom-controls { position: fixed; z-index: 3; right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 2px; padding: 4px; border: 1px solid #cce5ed; border-radius: 99px; background: #ffffffed; box-shadow: 0 6px 20px #006c9826; }
+    .zoom-controls button { width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: var(--rpm-blue-deep); cursor: pointer; font-size: 1.3rem; line-height: 1; }
+    .zoom-controls button:hover, .zoom-controls button:focus-visible { background: var(--rpm-blue); color: #fff; outline: none; }
+    #zoom-value { min-width: 45px; color: var(--rpm-ink); font-size: .76rem; font-weight: 800; text-align: center; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes page-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 580px) { .topbar { min-height: 64px; padding: 9px 14px; } .brand-mark { width: 33px; height: 33px; } .brand-copy span { display: none; } .brand-copy strong { font-size: .88rem; } .page-chip { display: none; } .reader { width: calc(100% - 20px); padding-top: 12px; gap: 14px; } .zoom-panel { right: 12px; bottom: 12px; } }
+    @media (max-width: 520px) { .topbar { min-height: 62px; padding: 6px 10px; } .logo-link { flex-basis: 128px; } .logo-link img { max-height: 46px; } .nav-button { min-height: 34px; padding: 6px 8px; font-size: .75rem; } #page-indicator { min-width: 52px; font-size: .7rem; } .download { display: none; } }
   </style>
 </head>
 <body>
   <div class="app">
     <header class="topbar">
-      <a class="brand" href="https://www.explorerpm.com/" target="_blank" rel="noopener noreferrer" aria-label="ExploreRPM home page">
-        <span class="brand-mark">RPM</span>
-        <span class="brand-copy"><strong>Luxury Townhomes</strong><span>ExploreRPM</span></span>
-      </a>
-      <div class="actions">
-        <span class="page-chip" id="page-count" aria-live="polite">Loading document</span>
-        <a class="download" id="download-pdf" href="#" target="_blank" rel="noopener noreferrer" aria-label="Open or download PDF" title="Open PDF">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
-        </a>
-      </div>
+      <a class="logo-link" href="https://www.explorerpm.com/" target="_blank" rel="noopener noreferrer" aria-label="ExploreRPM home page"><img src="assets/rpm-luxury-townhomes-logo.png" alt="RPM Luxury Townhomes - A Property Management Company"></a>
+      <nav class="navigation" aria-label="PDF page controls">
+        <button class="nav-button" id="previous" type="button" disabled>Previous</button>
+        <span id="page-indicator" aria-live="polite">Loading</span>
+        <button class="nav-button" id="next" type="button" disabled>Next</button>
+        <a class="download" id="download-pdf" href="#" target="_blank" rel="noopener noreferrer" aria-label="Open or download PDF" title="Open PDF"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg></a>
+      </nav>
     </header>
-    <main class="viewer-container" id="viewer-container" aria-label="PDF document viewer">
-      <section class="reader" id="reader"><p class="loading">Loading the latest document...</p></section>
-    </main>
-    <div class="zoom-panel" aria-label="Zoom controls">
-      <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
-      <span id="zoom-value">100%</span>
-      <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
-    </div>
+    <main class="viewer-container" id="viewer-container" aria-label="PDF document viewer"><div id="viewer"><p class="status">Loading the latest PDF...</p></div></main>
+    <div class="zoom-controls" aria-label="Zoom controls"><button id="zoom-out" type="button" aria-label="Zoom out">−</button><span id="zoom-value">100%</span><button id="zoom-in" type="button" aria-label="Zoom in">+</button></div>
   </div>
   <script>
     const sharePointUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
-    // Each visit receives a fresh request, preventing a mobile browser from showing an older SharePoint PDF.
     const pdfUrl = `/api/getDownloadUrl?url=${encodeURIComponent(sharePointUrl)}&v=${Date.now()}`;
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    const container = document.getElementById('viewer-container');
-    const reader = document.getElementById('reader');
-    const pageCount = document.getElementById('page-count');
-    const zoomValue = document.getElementById('zoom-value');
+    const container = document.getElementById('viewer-container'); const viewer = document.getElementById('viewer');
+    const previous = document.getElementById('previous'); const next = document.getElementById('next'); const indicator = document.getElementById('page-indicator');
     document.getElementById('download-pdf').href = pdfUrl;
-    let pdfDoc, zoom = 1, renderToken = 0, resizeTimer;
-    const setMessage = (message, isError = false) => reader.innerHTML = `<p class="loading${isError ? ' error' : ''}">${message}</p>`;
-    const updateZoom = () => zoomValue.textContent = `${Math.round(zoom * 100)}%`;
-    async function renderPage(pageNumber, width, token) {
-      const page = await pdfDoc.getPage(pageNumber);
-      const base = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: Math.max(.25, width / base.width * zoom) });
-      const density = Math.min(window.devicePixelRatio || 1, 2);
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.ceil(viewport.width * density); canvas.height = Math.ceil(viewport.height * density);
-      canvas.style.width = `${Math.ceil(viewport.width)}px`; canvas.style.height = `${Math.ceil(viewport.height)}px`;
-      const wrapper = document.createElement('article'); wrapper.className = 'page'; wrapper.dataset.page = pageNumber; wrapper.append(canvas);
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport, transform: density === 1 ? null : [density, 0, 0, density, 0, 0] }).promise;
-      if (token === renderToken) reader.append(wrapper);
-    }
-    async function renderDocument(keepPosition = false) {
-      if (!pdfDoc) return;
-      const token = ++renderToken;
-      const progress = keepPosition && container.scrollHeight > container.clientHeight ? container.scrollTop / (container.scrollHeight - container.clientHeight) : 0;
-      setMessage('Preparing your document...');
-      const width = Math.max(220, reader.clientWidth);
+    let pdfDoc, currentPage = 1, zoom = 1, renderToken = 0, resizeTimer, touchStartX = 0;
+    const status = (message, error = false) => viewer.innerHTML = `<p class="status${error ? ' error' : ''}">${message}</p>`;
+    const updateControls = () => { indicator.textContent = pdfDoc ? `${currentPage} / ${pdfDoc.numPages}` : 'Loading'; previous.disabled = !pdfDoc || currentPage === 1; next.disabled = !pdfDoc || currentPage === pdfDoc.numPages; document.getElementById('zoom-value').textContent = `${Math.round(zoom * 100)}%`; };
+    async function renderCurrentPage() {
+      if (!pdfDoc) return; const token = ++renderToken; status('Loading page...'); updateControls();
       try {
-        for (let pageNumber = 1; pageNumber <= pdfDoc.numPages; pageNumber++) {
-          if (token !== renderToken) return;
-          await renderPage(pageNumber, width, token);
-          pageCount.textContent = `Page ${pageNumber} of ${pdfDoc.numPages}`;
-        }
-        if (token === renderToken) { pageCount.textContent = `${pdfDoc.numPages} pages`; requestAnimationFrame(() => { container.scrollTop = progress * Math.max(0, container.scrollHeight - container.clientHeight); }); }
-      } catch (error) { if (token === renderToken) setMessage(`We could not display this PDF. ${error.message}`, true); }
+        const page = await pdfDoc.getPage(currentPage); const base = page.getViewport({ scale: 1 });
+        const availableWidth = Math.max(1, container.clientWidth - 2); const availableHeight = Math.max(1, container.clientHeight - 2);
+        const fitScale = Math.min(availableWidth / base.width, availableHeight / base.height);
+        const viewport = page.getViewport({ scale: fitScale * zoom }); const density = Math.min(window.devicePixelRatio || 1, 2);
+        const canvas = document.createElement('canvas'); canvas.width = Math.ceil(viewport.width * density); canvas.height = Math.ceil(viewport.height * density);
+        canvas.style.width = `${Math.ceil(viewport.width)}px`; canvas.style.height = `${Math.ceil(viewport.height)}px`;
+        const wrapper = document.createElement('article'); wrapper.className = 'page'; wrapper.append(canvas);
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport, transform: density === 1 ? null : [density, 0, 0, density, 0, 0] }).promise;
+        if (token !== renderToken) return; viewer.replaceChildren(wrapper); container.scrollTop = 0; container.scrollLeft = 0; updateControls();
+      } catch (error) { if (token === renderToken) { status(`We could not display this page. ${error.message}`, true); } }
     }
-    document.getElementById('zoom-in').addEventListener('click', () => { if (zoom < 2) { zoom += .2; updateZoom(); renderDocument(true); } });
-    document.getElementById('zoom-out').addEventListener('click', () => { if (zoom > .6) { zoom -= .2; updateZoom(); renderDocument(true); } });
-    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => renderDocument(true), 180); });
-    (async () => {
-      try {
-        pdfDoc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
-        await renderDocument();
-      } catch (error) { setMessage(`We could not load the latest PDF. ${error.message}`, true); pageCount.textContent = 'Document unavailable'; }
-    })();
+    const move = direction => { const target = Math.max(1, Math.min(pdfDoc.numPages, currentPage + direction)); if (target !== currentPage) { currentPage = target; renderCurrentPage(); } };
+    previous.addEventListener('click', () => move(-1)); next.addEventListener('click', () => move(1));
+    document.getElementById('zoom-in').addEventListener('click', () => { if (zoom < 2) { zoom = Math.round((zoom + .2) * 10) / 10; renderCurrentPage(); } });
+    document.getElementById('zoom-out').addEventListener('click', () => { if (zoom > .6) { zoom = Math.round((zoom - .2) * 10) / 10; renderCurrentPage(); } });
+    document.addEventListener('keydown', event => { if (event.key === 'ArrowLeft') move(-1); if (event.key === 'ArrowRight') move(1); });
+    container.addEventListener('touchstart', event => { touchStartX = event.touches[0].clientX; }, { passive: true });
+    container.addEventListener('touchend', event => { const distance = event.changedTouches[0].clientX - touchStartX; if (Math.abs(distance) > 50) move(distance < 0 ? 1 : -1); }, { passive: true });
+    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderCurrentPage, 120); });
+    (async () => { try { pdfDoc = await pdfjsLib.getDocument({ url: pdfUrl }).promise; updateControls(); await renderCurrentPage(); } catch (error) { status(`We could not load the latest PDF. ${error.message}`, true); indicator.textContent = 'Unavailable'; } })();
   </script>
 </body>
 </html>
