@@ -176,159 +176,182 @@
         let currentZoom = 1.0;
         let currentSpread = 0;
         let maxSpreadIndex = 0;
-        
+
         const viewer = document.getElementById('viewer');
-        const statusEl = document.getElementById('status');
+
+        const mobileBreakpoint = 640; // px
+        const spreadGap = 24; // px gap between pages
 
         async function initPDF() {
             try {
                 pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
-                
-                // Calculate total spreads: Cover is spread 0, remainder is divided by 2
                 maxSpreadIndex = pdfDoc.numPages === 1 ? 0 : Math.ceil((pdfDoc.numPages - 1) / 2);
-                
                 renderSpread(currentSpread);
+                attachInteractions();
+                window.addEventListener('resize', debounce(() => renderSpread(currentSpread), 150));
             } catch (error) {
                 viewer.innerHTML = `<div class="status-message" style="color: #ff6b6b">Error loading PDF: ${error.message}</div>`;
             }
         }
 
-        async function createPageElement(pageNum) {
+        function isSingleView() {
+            return window.innerWidth <= mobileBreakpoint;
+        }
+
+        async function createPageElement(pageNum, availableWidth) {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: currentZoom });
+            // get original width at scale=1
+            const baseViewport = page.getViewport({ scale: 1 });
+            const targetScale = Math.max(0.5, (availableWidth / baseViewport.width) * currentZoom);
+            const viewport = page.getViewport({ scale: targetScale });
 
             const wrapper = document.createElement('div');
             wrapper.className = 'page-wrapper';
-            
+
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            
+
             const outputScale = window.devicePixelRatio || 1;
             canvas.width = Math.floor(viewport.width * outputScale);
             canvas.height = Math.floor(viewport.height * outputScale);
-            
-            const exactWidth = Math.floor(viewport.width) + "px";
-            const exactHeight = Math.floor(viewport.height) + "px";
-            canvas.style.width = exactWidth;
-            canvas.style.height = exactHeight;
-            
-            wrapper.style.width = exactWidth;
-            wrapper.style.height = exactHeight;
+            canvas.style.width = Math.floor(viewport.width) + 'px';
+            canvas.style.height = Math.floor(viewport.height) + 'px';
 
-            const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+            wrapper.style.width = canvas.style.width;
+            wrapper.style.height = canvas.style.height;
 
-            wrapper.appendChild(canvas);
-            
-            await page.render({
-                canvasContext: ctx,
-                transform: transform,
-                viewport: viewport
-            }).promise;
+            // scale drawing for high-DPI
+            ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
 
-            return { wrapper, width: exactWidth, height: exactHeight };
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            return { wrapper, width: parseInt(wrapper.style.width, 10), height: parseInt(wrapper.style.height, 10) };
         }
 
         async function renderSpread(spreadIndex) {
             viewer.innerHTML = '<div class="status-message">Rendering...</div>';
-            
+
             const spreadContainer = document.createElement('div');
             spreadContainer.className = 'book-spread';
-            
-            // Logic for booklet pagination
+
+            // Determine page numbers
             let leftPageNum = spreadIndex === 0 ? null : (spreadIndex * 2);
             let rightPageNum = spreadIndex === 0 ? 1 : (spreadIndex * 2 + 1);
             if (rightPageNum > pdfDoc.numPages) rightPageNum = null;
 
+            const single = isSingleView();
+            // available width for viewer content
+            const avail = Math.max(200, viewer.clientWidth - 48);
+
             let leftEl = null, rightEl = null;
-            let referenceWidth = '400px', referenceHeight = '600px'; 
-            
-            // Render actual pages
-            if (leftPageNum) {
-                const leftData = await createPageElement(leftPageNum);
-                leftEl = leftData.wrapper;
-                referenceWidth = leftData.width;
-                referenceHeight = leftData.height;
-            }
-            if (rightPageNum) {
-                const rightData = await createPageElement(rightPageNum);
-                rightEl = rightData.wrapper;
-                referenceWidth = rightData.width;
-                referenceHeight = rightData.height;
-            }
+            let referenceWidth = 400, referenceHeight = 600;
 
-            // Create empty placeholders to keep the book centered
-            if (!leftEl) {
-                leftEl = document.createElement('div');
-                leftEl.className = 'page-wrapper empty';
-                leftEl.style.width = referenceWidth;
-                leftEl.style.height = referenceHeight;
-            }
-            if (!rightEl) {
-                rightEl = document.createElement('div');
-                rightEl.className = 'page-wrapper empty';
-                rightEl.style.width = referenceWidth;
-                rightEl.style.height = referenceHeight;
-            }
+            if (single) {
+                // single page: show right if present otherwise left
+                const pageToShow = rightPageNum || leftPageNum;
+                if (pageToShow) {
+                    const pageData = await createPageElement(pageToShow, avail);
+                    rightEl = pageData.wrapper;
+                    referenceWidth = pageData.width; referenceHeight = pageData.height;
+                }
+                // center single
+                if (!rightEl) {
+                    rightEl = document.createElement('div');
+                    rightEl.className = 'page-wrapper empty';
+                    rightEl.style.width = referenceWidth + 'px';
+                    rightEl.style.height = referenceHeight + 'px';
+                }
+                spreadContainer.classList.add('single');
+                spreadContainer.appendChild(rightEl);
+            } else {
+                // two-page spread
+                // compute width per page: (avail - gap) / 2
+                const perPage = Math.floor((avail - spreadGap) / 2);
+                if (leftPageNum) {
+                    const leftData = await createPageElement(leftPageNum, perPage);
+                    leftEl = leftData.wrapper; referenceWidth = leftData.width; referenceHeight = leftData.height;
+                }
+                if (rightPageNum) {
+                    const rightData = await createPageElement(rightPageNum, perPage);
+                    rightEl = rightData.wrapper; referenceWidth = rightData.width; referenceHeight = rightData.height;
+                }
 
-            spreadContainer.appendChild(leftEl);
-            spreadContainer.appendChild(rightEl);
+                if (!leftEl) {
+                    leftEl = document.createElement('div');
+                    leftEl.className = 'page-wrapper empty';
+                    leftEl.style.width = referenceWidth + 'px'; leftEl.style.height = referenceHeight + 'px';
+                }
+                if (!rightEl) {
+                    rightEl = document.createElement('div');
+                    rightEl.className = 'page-wrapper empty';
+                    rightEl.style.width = referenceWidth + 'px'; rightEl.style.height = referenceHeight + 'px';
+                }
 
-            // Add the binding crease only if we are viewing two open pages
-            if (leftPageNum && rightPageNum) {
-                const crease = document.createElement('div');
-                crease.className = 'crease';
-                spreadContainer.appendChild(crease);
+                spreadContainer.appendChild(leftEl);
+                spreadContainer.appendChild(rightEl);
+
+                if (leftPageNum && rightPageNum) {
+                    const crease = document.createElement('div');
+                    crease.className = 'crease';
+                    spreadContainer.appendChild(crease);
+                }
             }
 
             viewer.innerHTML = '';
             viewer.appendChild(spreadContainer);
-            
+
             updatePaginationUI(leftPageNum, rightPageNum);
         }
 
         function updatePaginationUI(leftNum, rightNum) {
             const textEl = document.getElementById('page-indicator');
-            if (!leftNum) {
-                textEl.textContent = `Page ${rightNum} of ${pdfDoc.numPages}`;
-            } else if (!rightNum) {
-                textEl.textContent = `Page ${leftNum} of ${pdfDoc.numPages}`;
+            if (isSingleView()) {
+                const pageNum = rightNum || leftNum || 0;
+                textEl.textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
             } else {
-                textEl.textContent = `Pages ${leftNum}-${rightNum} of ${pdfDoc.numPages}`;
+                if (!leftNum) textEl.textContent = `Page ${rightNum} of ${pdfDoc.numPages}`;
+                else if (!rightNum) textEl.textContent = `Page ${leftNum} of ${pdfDoc.numPages}`;
+                else textEl.textContent = `Pages ${leftNum}-${rightNum} of ${pdfDoc.numPages}`;
             }
-            
             document.getElementById('prev-spread').disabled = (currentSpread === 0);
             document.getElementById('next-spread').disabled = (currentSpread >= maxSpreadIndex);
         }
 
-        // Event Listeners for Pagination
+        // Pagination handlers
         document.getElementById('prev-spread').addEventListener('click', () => {
-            if (currentSpread > 0) {
-                currentSpread--;
-                renderSpread(currentSpread);
-            }
+            if (currentSpread > 0) { currentSpread--; renderSpread(currentSpread); }
         });
-
         document.getElementById('next-spread').addEventListener('click', () => {
-            if (currentSpread < maxSpreadIndex) {
-                currentSpread++;
-                renderSpread(currentSpread);
-            }
+            if (currentSpread < maxSpreadIndex) { currentSpread++; renderSpread(currentSpread); }
         });
 
-        // Event Listeners for Zoom
+        // Zoom handlers
         document.getElementById('zoom-in').addEventListener('click', () => {
-            if (currentZoom >= 3.0) return;
-            currentZoom += 0.25;
-            document.getElementById('zoom-percentage').textContent = `${Math.round(currentZoom * 100)}%`;
-            renderSpread(currentSpread);
+            if (currentZoom >= 3.0) return; currentZoom += 0.25; document.getElementById('zoom-percentage').textContent = `${Math.round(currentZoom*100)}%`; renderSpread(currentSpread);
+        });
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            if (currentZoom <= 0.5) return; currentZoom -= 0.25; document.getElementById('zoom-percentage').textContent = `${Math.round(currentZoom*100)}%`; renderSpread(currentSpread);
         });
 
-        document.getElementById('zoom-out').addEventListener('click', () => {
-            if (currentZoom <= 0.5) return;
-            currentZoom -= 0.25;
-            document.getElementById('zoom-percentage').textContent = `${Math.round(currentZoom * 100)}%`;
-            renderSpread(currentSpread);
-        });
+        // Touch and keyboard interactions
+        function attachInteractions() {
+            let startX = 0; let startY = 0;
+            viewer.addEventListener('touchstart', (e) => { const t = e.touches[0]; startX = t.clientX; startY = t.clientY; });
+            viewer.addEventListener('touchend', (e) => {
+                const t = e.changedTouches[0]; const dx = t.clientX - startX; const dy = t.clientY - startY;
+                if (Math.abs(dx) > 50 && Math.abs(dy) < 80) { if (dx < 0) { if (currentSpread < maxSpreadIndex) { currentSpread++; renderSpread(currentSpread); } } else { if (currentSpread > 0) { currentSpread--; renderSpread(currentSpread); } } }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') { if (currentSpread > 0) { currentSpread--; renderSpread(currentSpread); } }
+                if (e.key === 'ArrowRight') { if (currentSpread < maxSpreadIndex) { currentSpread++; renderSpread(currentSpread); } }
+                if (e.key === '+' || e.key === '=') { document.getElementById('zoom-in').click(); }
+                if (e.key === '-') { document.getElementById('zoom-out').click(); }
+            });
+        }
+
+        // debounce utility
+        function debounce(fn, wait) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); }; }
 
         // Initialize
         initPDF();
