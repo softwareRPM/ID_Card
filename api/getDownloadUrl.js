@@ -85,8 +85,17 @@ export default async function handler(req, res) {
       return res.status(pdfRes.status).json({ error: 'Failed to fetch PDF from downloadUrl', status: pdfRes.status, body });
     }
 
+    const contentType = pdfRes.headers.get('content-type') || '';
+    if (!contentType.toLowerCase().includes('pdf')) {
+      return res.status(502).json({ error: 'SharePoint did not return a PDF file', contentType });
+    }
+
     const arrayBuf = await pdfRes.arrayBuffer();
     const buffer = Buffer.from(arrayBuf);
+
+    if (buffer.length < 5 || buffer.subarray(0, 5).toString() !== '%PDF-') {
+      return res.status(502).json({ error: 'SharePoint returned invalid PDF data' });
+    }
 
     res.setHeader('Content-Type', 'application/pdf');
     // Prevent browser caching so new uploads show immediately

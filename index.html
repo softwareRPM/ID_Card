@@ -1,360 +1,119 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booklet PDF Viewer</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #323639; 
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Toolbar */
-        .toolbar {
-            background-color: #202124;
-            color: #ffffff;
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            z-index: 10;
-        }
-
-        .toolbar-title {
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .controls {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #3c4043;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-
-        .page-controls {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #3c4043;
-            padding: 4px 12px;
-            border-radius: 6px;
-        }
-
-        button {
-            background: #505356;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-
-        button:hover:not(:disabled) {
-            background: #6a6d71;
-        }
-
-        button:disabled {
-            background: #3c4043;
-            color: #6a6d71;
-            cursor: not-allowed;
-        }
-
-        #page-indicator, #zoom-percentage {
-            font-size: 14px;
-            text-align: center;
-            user-select: none;
-            min-width: 120px;
-        }
-
-        #zoom-percentage { min-width: 45px; }
-
-        /* Booklet Canvas Area */
-        .viewer-container {
-            flex: 1;
-            overflow: auto;
-            padding: 40px;
-            display: flex;
-            align-items: flex-start; /* Prevents top clipping on zoom */
-        }
-
-        .book-spread {
-            margin: auto; /* Centers the book in the flex container */
-            display: flex;
-            flex-direction: row;
-            position: relative;
-        }
-
-        .page-wrapper {
-            background-color: white;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            border: 1px solid #ddd;
-        }
-
-        .page-wrapper.empty {
-            background-color: transparent;
-            box-shadow: none;
-            border: none;
-        }
-
-        /* Simulated book crease down the middle */
-        .crease {
-            position: absolute;
-            top: 0; bottom: 0; left: 50%;
-            width: 40px;
-            transform: translateX(-50%);
-            background: linear-gradient(to right, 
-                rgba(255,255,255,0) 0%, 
-                rgba(0,0,0,0.05) 40%, 
-                rgba(0,0,0,0.2) 50%, 
-                rgba(0,0,0,0.05) 60%, 
-                rgba(255,255,255,0) 100%);
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        canvas {
-            display: block;
-        }
-
-        .status-message {
-            color: white;
-            font-size: 16px;
-            margin: auto;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#202124">
+  <title>RPM Luxury Townhomes Booklet</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: #323639; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .toolbar { z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px clamp(12px, 3vw, 24px); background: #202124; box-shadow: 0 2px 5px #0005; }
+    .toolbar-title { min-width: 0; overflow: hidden; color: #fff; font-size: 1rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .page-controls, .controls { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 8px; border-radius: 7px; background: #3c4043; }
+    .controls { justify-self: end; }
+    button { min-height: 34px; border: 0; border-radius: 5px; padding: 6px 10px; background: #505356; color: #fff; cursor: pointer; font: inherit; font-size: .875rem; font-weight: 650; }
+    button:hover:not(:disabled), button:focus-visible { background: #6a6d71; outline: 2px solid #9fc5ff; outline-offset: 2px; }
+    button:disabled { color: #92969a; cursor: not-allowed; }
+    #page-indicator { min-width: 116px; color: #fff; font-size: .875rem; text-align: center; white-space: nowrap; }
+    #zoom-percentage { width: 42px; color: #fff; font-size: .875rem; text-align: center; }
+    .viewer-container { flex: 1 1 auto; min-height: 0; overflow: auto; padding: clamp(12px, 4vw, 40px); }
+    #viewer { display: flex; align-items: flex-start; justify-content: center; min-width: 100%; min-height: 100%; }
+    .book-spread { position: relative; display: flex; gap: 24px; margin: auto; }
+    .book-spread.single { gap: 0; }
+    .page-wrapper { flex: 0 0 auto; overflow: hidden; border: 1px solid #ddd; background: #fff; box-shadow: 0 4px 15px #0006; }
+    .page-wrapper.empty { border: 0; background: transparent; box-shadow: none; }
+    .page-wrapper canvas { display: block; }
+    .crease { position: absolute; z-index: 2; top: 0; bottom: 0; left: 50%; width: 36px; transform: translateX(-50%); pointer-events: none; background: linear-gradient(90deg, transparent, #0002 50%, transparent); }
+    .status-message { align-self: center; margin: auto; max-width: 38rem; padding: 16px; color: #fff; text-align: center; line-height: 1.5; }
+    .status-message.error { color: #ffadad; }
+    @media (max-width: 760px) {
+      .toolbar { grid-template-columns: 1fr auto; gap: 8px; }
+      .toolbar-title { grid-column: 1 / -1; text-align: center; }
+      .page-controls { justify-self: start; }
+      .book-spread { gap: 12px; }
+    }
+    @media (max-width: 430px) {
+      .toolbar { padding: 8px; }
+      .page-controls, .controls { gap: 4px; padding: 3px 4px; }
+      button { min-height: 32px; padding: 5px 7px; }
+      #page-indicator { min-width: 96px; font-size: .78rem; }
+      #zoom-percentage { width: 37px; font-size: .78rem; }
+      .viewer-container { padding: 10px; }
+    }
+  </style>
 </head>
 <body>
-
-    <div class="toolbar">
-        <div class="toolbar-title">📖 RPM Luxury Townhomes</div>
-        
-        <div class="page-controls">
-            <button id="prev-spread" disabled>← Prev</button>
-            <span id="page-indicator">Loading...</span>
-            <button id="next-spread" disabled>Next →</button>
-        </div>
-
-        <div class="controls">
-            <button id="zoom-out" title="Zoom Out">−</button>
-            <span id="zoom-percentage">100%</span>
-            <button id="zoom-in" title="Zoom In">+</button>
-        </div>
+  <header class="toolbar">
+    <div class="toolbar-title">📖 RPM Luxury Townhomes</div>
+    <div class="page-controls" aria-label="Page controls">
+      <button id="prev-spread" type="button" disabled aria-label="Previous pages">← Prev</button>
+      <span id="page-indicator" aria-live="polite">Loading…</span>
+      <button id="next-spread" type="button" disabled aria-label="Next pages">Next →</button>
     </div>
-
-    <div class="viewer-container" id="viewer-container">
-        <div id="viewer">
-            <div class="status-message" id="status">Loading PDF...</div>
-        </div>
+    <div class="controls" aria-label="Zoom controls">
+      <button id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+      <span id="zoom-percentage">100%</span>
+      <button id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">+</button>
     </div>
-
-    <script>
-        const sharePointUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
-        const pdfUrl = '/api/getDownloadUrl?url=' + encodeURIComponent(sharePointUrl);
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        let pdfDoc = null;
-        let currentZoom = 1.0;
-        let currentSpread = 0;
-        let maxSpreadIndex = 0;
-
-        const viewer = document.getElementById('viewer');
-
-        const mobileBreakpoint = 640; // px
-        const spreadGap = 24; // px gap between pages
-
-        async function initPDF() {
-            try {
-                pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
-                maxSpreadIndex = pdfDoc.numPages === 1 ? 0 : Math.ceil((pdfDoc.numPages - 1) / 2);
-                renderSpread(currentSpread);
-                attachInteractions();
-                window.addEventListener('resize', debounce(() => renderSpread(currentSpread), 150));
-            } catch (error) {
-                viewer.innerHTML = `<div class="status-message" style="color: #ff6b6b">Error loading PDF: ${error.message}</div>`;
-            }
+  </header>
+  <main class="viewer-container" id="viewer-container"><div id="viewer"><p class="status-message">Loading PDF…</p></div></main>
+  <script>
+    const sharePointUrl = 'https://explorerpm.sharepoint.com/:b:/s/ExplorerpmPublic/IQAVi_Q2XsbZTaqI8NP3bXIWAdswOcANmdWDPKvO_ILCUHE?e=I3sZDV';
+    const pdfUrl = `/api/getDownloadUrl?url=${encodeURIComponent(sharePointUrl)}`;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const viewer = document.getElementById('viewer');
+    const container = document.getElementById('viewer-container');
+    let pdfDoc, currentSpread = 0, currentZoom = 1, maxSpread = 0, rendering = 0;
+    const isSingleView = () => window.matchMedia('(max-width: 640px)').matches;
+    const setStatus = (message, error = false) => viewer.innerHTML = `<p class="status-message${error ? ' error' : ''}">${message}</p>`;
+    function pageNumbers(spread) { const left = spread ? spread * 2 : null; const right = spread ? spread * 2 + 1 : 1; return [left, right > pdfDoc.numPages ? null : right]; }
+    async function pageElement(number, targetWidth) {
+      const page = await pdfDoc.getPage(number);
+      const base = page.getViewport({ scale: 1 });
+      const scale = Math.max(.25, (targetWidth / base.width) * currentZoom);
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.ceil(viewport.width * ratio); canvas.height = Math.ceil(viewport.height * ratio);
+      canvas.style.width = `${Math.ceil(viewport.width)}px`; canvas.style.height = `${Math.ceil(viewport.height)}px`;
+      const wrapper = document.createElement('div'); wrapper.className = 'page-wrapper'; wrapper.style.width = canvas.style.width; wrapper.style.height = canvas.style.height; wrapper.append(canvas);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport, transform: ratio === 1 ? null : [ratio, 0, 0, ratio, 0, 0] }).promise;
+      return wrapper;
+    }
+    function updateControls(left, right) {
+      const label = isSingleView() ? `Page ${right || left} of ${pdfDoc.numPages}` : left && right ? `Pages ${left}–${right} of ${pdfDoc.numPages}` : `Page ${right || left} of ${pdfDoc.numPages}`;
+      document.getElementById('page-indicator').textContent = label;
+      document.getElementById('prev-spread').disabled = currentSpread === 0;
+      document.getElementById('next-spread').disabled = currentSpread >= maxSpread;
+      document.getElementById('zoom-percentage').textContent = `${Math.round(currentZoom * 100)}%`;
+    }
+    async function renderSpread(spreadIndex = currentSpread) {
+      if (!pdfDoc) return; currentSpread = spreadIndex; const renderId = ++rendering; setStatus('Rendering PDF…');
+      try {
+        const [left, right] = pageNumbers(currentSpread); const single = isSingleView();
+        const contentWidth = Math.max(180, container.clientWidth - 2 * Math.min(40, Math.max(10, container.clientWidth * .04)));
+        const spreadEl = document.createElement('div'); spreadEl.className = `book-spread${single ? ' single' : ''}`;
+        if (single) { spreadEl.append(await pageElement(right || left, contentWidth)); }
+        else {
+          const width = Math.max(160, (contentWidth - 24) / 2); const nodes = await Promise.all([left ? pageElement(left, width) : null, right ? pageElement(right, width) : null]);
+          const sample = nodes.find(Boolean); for (const node of nodes) { if (node) spreadEl.append(node); else { const blank = document.createElement('div'); blank.className = 'page-wrapper empty'; blank.style.width = sample.style.width; blank.style.height = sample.style.height; spreadEl.append(blank); } }
+          if (left && right) { const crease = document.createElement('div'); crease.className = 'crease'; spreadEl.append(crease); }
         }
-
-        function isSingleView() {
-            return window.innerWidth <= mobileBreakpoint;
-        }
-
-        async function createPageElement(pageNum, availableWidth) {
-            const page = await pdfDoc.getPage(pageNum);
-            // get original width at scale=1
-            const baseViewport = page.getViewport({ scale: 1 });
-            const targetScale = Math.max(0.5, (availableWidth / baseViewport.width) * currentZoom);
-            const viewport = page.getViewport({ scale: targetScale });
-
-            const wrapper = document.createElement('div');
-            wrapper.className = 'page-wrapper';
-
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            const outputScale = window.devicePixelRatio || 1;
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            canvas.style.width = Math.floor(viewport.width) + 'px';
-            canvas.style.height = Math.floor(viewport.height) + 'px';
-
-            wrapper.style.width = canvas.style.width;
-            wrapper.style.height = canvas.style.height;
-
-            // scale drawing for high-DPI
-            ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
-
-            await page.render({ canvasContext: ctx, viewport }).promise;
-
-            return { wrapper, width: parseInt(wrapper.style.width, 10), height: parseInt(wrapper.style.height, 10) };
-        }
-
-        async function renderSpread(spreadIndex) {
-            viewer.innerHTML = '<div class="status-message">Rendering...</div>';
-
-            const spreadContainer = document.createElement('div');
-            spreadContainer.className = 'book-spread';
-
-            // Determine page numbers
-            let leftPageNum = spreadIndex === 0 ? null : (spreadIndex * 2);
-            let rightPageNum = spreadIndex === 0 ? 1 : (spreadIndex * 2 + 1);
-            if (rightPageNum > pdfDoc.numPages) rightPageNum = null;
-
-            const single = isSingleView();
-            // available width for viewer content
-            const avail = Math.max(200, viewer.clientWidth - 48);
-
-            let leftEl = null, rightEl = null;
-            let referenceWidth = 400, referenceHeight = 600;
-
-            if (single) {
-                // single page: show right if present otherwise left
-                const pageToShow = rightPageNum || leftPageNum;
-                if (pageToShow) {
-                    const pageData = await createPageElement(pageToShow, avail);
-                    rightEl = pageData.wrapper;
-                    referenceWidth = pageData.width; referenceHeight = pageData.height;
-                }
-                // center single
-                if (!rightEl) {
-                    rightEl = document.createElement('div');
-                    rightEl.className = 'page-wrapper empty';
-                    rightEl.style.width = referenceWidth + 'px';
-                    rightEl.style.height = referenceHeight + 'px';
-                }
-                spreadContainer.classList.add('single');
-                spreadContainer.appendChild(rightEl);
-            } else {
-                // two-page spread
-                // compute width per page: (avail - gap) / 2
-                const perPage = Math.floor((avail - spreadGap) / 2);
-                if (leftPageNum) {
-                    const leftData = await createPageElement(leftPageNum, perPage);
-                    leftEl = leftData.wrapper; referenceWidth = leftData.width; referenceHeight = leftData.height;
-                }
-                if (rightPageNum) {
-                    const rightData = await createPageElement(rightPageNum, perPage);
-                    rightEl = rightData.wrapper; referenceWidth = rightData.width; referenceHeight = rightData.height;
-                }
-
-                if (!leftEl) {
-                    leftEl = document.createElement('div');
-                    leftEl.className = 'page-wrapper empty';
-                    leftEl.style.width = referenceWidth + 'px'; leftEl.style.height = referenceHeight + 'px';
-                }
-                if (!rightEl) {
-                    rightEl = document.createElement('div');
-                    rightEl.className = 'page-wrapper empty';
-                    rightEl.style.width = referenceWidth + 'px'; rightEl.style.height = referenceHeight + 'px';
-                }
-
-                spreadContainer.appendChild(leftEl);
-                spreadContainer.appendChild(rightEl);
-
-                if (leftPageNum && rightPageNum) {
-                    const crease = document.createElement('div');
-                    crease.className = 'crease';
-                    spreadContainer.appendChild(crease);
-                }
-            }
-
-            viewer.innerHTML = '';
-            viewer.appendChild(spreadContainer);
-
-            updatePaginationUI(leftPageNum, rightPageNum);
-        }
-
-        function updatePaginationUI(leftNum, rightNum) {
-            const textEl = document.getElementById('page-indicator');
-            if (isSingleView()) {
-                const pageNum = rightNum || leftNum || 0;
-                textEl.textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
-            } else {
-                if (!leftNum) textEl.textContent = `Page ${rightNum} of ${pdfDoc.numPages}`;
-                else if (!rightNum) textEl.textContent = `Page ${leftNum} of ${pdfDoc.numPages}`;
-                else textEl.textContent = `Pages ${leftNum}-${rightNum} of ${pdfDoc.numPages}`;
-            }
-            document.getElementById('prev-spread').disabled = (currentSpread === 0);
-            document.getElementById('next-spread').disabled = (currentSpread >= maxSpreadIndex);
-        }
-
-        // Pagination handlers
-        document.getElementById('prev-spread').addEventListener('click', () => {
-            if (currentSpread > 0) { currentSpread--; renderSpread(currentSpread); }
-        });
-        document.getElementById('next-spread').addEventListener('click', () => {
-            if (currentSpread < maxSpreadIndex) { currentSpread++; renderSpread(currentSpread); }
-        });
-
-        // Zoom handlers
-        document.getElementById('zoom-in').addEventListener('click', () => {
-            if (currentZoom >= 3.0) return; currentZoom += 0.25; document.getElementById('zoom-percentage').textContent = `${Math.round(currentZoom*100)}%`; renderSpread(currentSpread);
-        });
-        document.getElementById('zoom-out').addEventListener('click', () => {
-            if (currentZoom <= 0.5) return; currentZoom -= 0.25; document.getElementById('zoom-percentage').textContent = `${Math.round(currentZoom*100)}%`; renderSpread(currentSpread);
-        });
-
-        // Touch and keyboard interactions
-        function attachInteractions() {
-            let startX = 0; let startY = 0;
-            viewer.addEventListener('touchstart', (e) => { const t = e.touches[0]; startX = t.clientX; startY = t.clientY; });
-            viewer.addEventListener('touchend', (e) => {
-                const t = e.changedTouches[0]; const dx = t.clientX - startX; const dy = t.clientY - startY;
-                if (Math.abs(dx) > 50 && Math.abs(dy) < 80) { if (dx < 0) { if (currentSpread < maxSpreadIndex) { currentSpread++; renderSpread(currentSpread); } } else { if (currentSpread > 0) { currentSpread--; renderSpread(currentSpread); } } }
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowLeft') { if (currentSpread > 0) { currentSpread--; renderSpread(currentSpread); } }
-                if (e.key === 'ArrowRight') { if (currentSpread < maxSpreadIndex) { currentSpread++; renderSpread(currentSpread); } }
-                if (e.key === '+' || e.key === '=') { document.getElementById('zoom-in').click(); }
-                if (e.key === '-') { document.getElementById('zoom-out').click(); }
-            });
-        }
-
-        // debounce utility
-        function debounce(fn, wait) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); }; }
-
-        // Initialize
-        initPDF();
-    </script>
+        if (renderId !== rendering) return; viewer.replaceChildren(spreadEl); updateControls(left, right);
+      } catch (error) { if (renderId === rendering) setStatus(`Unable to render this PDF: ${error.message}`, true); }
+    }
+    function move(amount) { const next = Math.max(0, Math.min(maxSpread, currentSpread + amount)); if (next !== currentSpread) renderSpread(next); }
+    document.getElementById('prev-spread').onclick = () => move(-1); document.getElementById('next-spread').onclick = () => move(1);
+    document.getElementById('zoom-in').onclick = () => { if (currentZoom < 3) { currentZoom += .25; renderSpread(); } };
+    document.getElementById('zoom-out').onclick = () => { if (currentZoom > .5) { currentZoom -= .25; renderSpread(); } };
+    document.addEventListener('keydown', e => { if (e.key === 'ArrowLeft') move(-1); if (e.key === 'ArrowRight') move(1); });
+    let touchX = 0; viewer.addEventListener('touchstart', e => touchX = e.touches[0].clientX, { passive: true }); viewer.addEventListener('touchend', e => { const distance = e.changedTouches[0].clientX - touchX; if (Math.abs(distance) > 50) move(distance < 0 ? 1 : -1); }, { passive: true });
+    let resizeTimer; window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => renderSpread(), 150); });
+    (async () => { try { pdfDoc = await pdfjsLib.getDocument({ url: pdfUrl }).promise; maxSpread = pdfDoc.numPages === 1 ? 0 : Math.ceil((pdfDoc.numPages - 1) / 2); await renderSpread(); } catch (error) { setStatus(`Unable to load the PDF. ${error.message}`, true); } })();
+  </script>
 </body>
 </html>
